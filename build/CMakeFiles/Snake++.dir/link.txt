@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/Snake++.dir/src/main.cpp.o -o Snake++  -lcurses /usr/lib/x86_64-linux-gnu/libform.so
