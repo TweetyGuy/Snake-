@@ -1,8 +1,8 @@
+#include <vector>
 #include <ncurses.h>
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
-#include <vector>
 
 
 struct Vec2
@@ -31,48 +31,56 @@ struct Vec2
 
 struct Snake
 {
-	std::vector<struct Vec2> body{};
-
-	struct Vec2 head{};
-	body.push_back(head);
-
+	Vec2 head;
+	std::vector<Vec2> body;
 	Snake()
 	{
 		body.push_back(head);
 	}
-
 	bool should_move_back = true;
 
 	void move(int x, int y)
 	{
-		for (auto segment : body)
+		Vec2 vec;
+		for (int i = 0; i < body.size(); i++)
 		{
-			if (segment.x == body.back().x && segment.y == body.back().y && !should_move_back)
+			if (i == body.size() - 1 && !should_move_back)
 			{
 				should_move_back = true;
 				continue;
 			}
-			segment.x += x;
-			segment.y += y;
+			vec.x += x;
+			vec.y += y;
+
+			if (i == 0)
+			{
+				body[i].x += vec.x;
+				body[i].y += vec.y;
+			}
+			else
+			{
+				body[i].x = body[i-1].x;
+				body[i].y = body[i-1].y;
+			}
 		}
 	}
 
 	void extend_snake()
 	{
 		Vec2 new_segment = body.back();
+		body.push_back(new_segment);
 		should_move_back = false;
 	}
 
 };
 
-struct Apple
+struct Apple : Vec2
 {
 	Apple() = default;
-	Vec2 apple;
 	void new_pos()
 	{
-		apple.x = rand() % 20; // Use seeded random numbers $ man 3 rand
-		apple.y = rand() % 20;
+		x = rand() % 20; // Use seeded random numbers $ man 3 rand
+		y = rand() % 20;
 	}
 };
 
@@ -84,28 +92,44 @@ int main()
 	
 	Apple apple;
 	Snake snake;
+	Vec2 dir;
 
 	apple.new_pos();
 
 	while (true)
 	{
 		int key = wgetch(win);
-		
-		apple.new_pos();
+		if (snake.body.front().x == apple.x && snake.body.front().y == apple.y)
+		{
+			apple.new_pos();
+			snake.extend_snake();
+		}
 
 		if (key == KEY_DOWN)
-			snake.move(0, -1);
+		{
+			
+		}
 		if (key == KEY_UP)
-			snake.move(0, 1);
+		{
+			dir.x = 0;
+			dir.y = 1;
+		}
 		if (key == KEY_LEFT)
-			snake.move(-1, 0);
+		{
+			dir.x = -1;
+			dir.y = 0;
+		}
 		if (key == KEY_RIGHT)
-			snake.move(1, 0);
-
+		{
+			dir.x = 1;
+			dir.y = 0;
+		}
+		snake.body.front().x += dir.x;
+		snake.body.front().y += dir.y;
 		erase();
-		mvaddstr(snake.body.front().x, snake.body.front().y, "*");
-		mvaddstr(apple.apple.x, apple.apple.y, "&");
-		usleep(1000000);
+		mvaddstr(snake.body.front().y, snake.body.front().x, "#");
+		mvaddstr(apple.x, apple.y, "&");
+		usleep(100000); // Sleep for 0.1s
 	}
 
 	endwin();
