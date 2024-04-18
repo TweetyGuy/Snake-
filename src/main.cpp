@@ -9,8 +9,8 @@ struct Vec2
 {
 	Vec2() = default;
 
-	int x = 0;
-	int y = 0;
+	int x = 10;
+	int y = 10;
 
 	void set_pos(int npos_x, int npos_y)
 	{
@@ -29,51 +29,6 @@ struct Vec2
 	}
 };
 
-struct Snake
-{
-	Vec2 head;
-	std::vector<Vec2> body;
-	Snake()
-	{
-		body.push_back(head);
-	}
-	bool should_move_back = true;
-
-	void move(int x, int y)
-	{
-		Vec2 vec;
-		for (int i = 0; i < body.size(); i++)
-		{
-			if (i == body.size() - 1 && !should_move_back)
-			{
-				should_move_back = true;
-				continue;
-			}
-			vec.x += x;
-			vec.y += y;
-
-			if (i == 0)
-			{
-				body[i].x += vec.x;
-				body[i].y += vec.y;
-			}
-			else
-			{
-				body[i].x = body[i-1].x;
-				body[i].y = body[i-1].y;
-			}
-		}
-	}
-
-	void extend_snake()
-	{
-		Vec2 new_segment = body.back();
-		body.push_back(new_segment);
-		should_move_back = false;
-	}
-
-};
-
 struct Apple : Vec2
 {
 	Apple() = default;
@@ -82,7 +37,96 @@ struct Apple : Vec2
 		x = rand() % 20; // Use seeded random numbers $ man 3 rand
 		y = rand() % 20;
 	}
+
+	void update()
+	{
+		mvaddstr(y, x, "&");
+	}
 };
+
+struct Snake
+{
+	Vec2 head;
+	std::vector<Vec2> body;
+	Vec2 dir;
+	Snake()
+	{
+		dir.x = 0;
+		dir.y = 0;
+	
+		body.push_back(head);
+	}
+	bool should_move_back = true;
+
+
+	void extend_snake() // Silly ahh function. new_segment gets deleted at end of scope lmaooo gotta make it an std::vector<std::shared_ptr<Vec2>> and push_back an std::shared_ptr<Vec2>;
+	{
+		Vec2 new_segment = body.back();
+		body.push_back(new_segment);
+		should_move_back = false;
+	}
+
+	void move(int xdir, int ydir)
+	{
+		dir.x = xdir;
+		dir.y = ydir;
+	}
+
+	void update(Apple* apple, WINDOW* win)
+	{
+		int key = wgetch(win);
+
+		if (key == KEY_DOWN)
+		{
+			move(0, 1);
+		}
+		if (key == KEY_UP)
+		{
+			move(0, -1);
+		}
+		if (key == KEY_LEFT)
+		{
+			move(-1, 0);
+		}
+		if (key == KEY_RIGHT)
+		{
+			move(1, 0);
+		}
+
+		if (body.front().x == apple->x && body.front().y == apple->y)
+		{
+			apple->new_pos();
+			//extend_snake();
+		}
+
+		for (int i = 0; i < body.size(); i++)
+		{
+			if (i == 0)
+			{
+				body[i].x += dir.x;
+				body[i].y += dir.y;
+			}
+			else
+			{
+				body[i].x = body[i-1].x;
+				body[i].y = body[i-1].y;
+			}
+		}
+		mvaddstr(body.front().y, body.front().x, "#");
+
+	}
+
+	
+
+
+};
+
+void update(Snake* snake, Apple* apple, WINDOW* win)
+{
+	snake->update(apple, win);
+	apple->update();
+	refresh();
+}
 
 int main()
 {
@@ -98,37 +142,8 @@ int main()
 
 	while (true)
 	{
-		int key = wgetch(win);
-		if (snake.body.front().x == apple.x && snake.body.front().y == apple.y)
-		{
-			apple.new_pos();
-			snake.extend_snake();
-		}
-
-		if (key == KEY_DOWN)
-		{
-			
-		}
-		if (key == KEY_UP)
-		{
-			dir.x = 0;
-			dir.y = 1;
-		}
-		if (key == KEY_LEFT)
-		{
-			dir.x = -1;
-			dir.y = 0;
-		}
-		if (key == KEY_RIGHT)
-		{
-			dir.x = 1;
-			dir.y = 0;
-		}
-		snake.body.front().x += dir.x;
-		snake.body.front().y += dir.y;
+		update(&snake, &apple, win);
 		erase();
-		mvaddstr(snake.body.front().y, snake.body.front().x, "#");
-		mvaddstr(apple.x, apple.y, "&");
 		usleep(100000); // Sleep for 0.1s
 	}
 
