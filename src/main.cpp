@@ -3,30 +3,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <memory>
 
 
 struct Vec2
 {
-	Vec2() = default;
-
 	int x = 10;
 	int y = 10;
-
-	void set_pos(int npos_x, int npos_y)
-	{
-		x = npos_x;
-		y = npos_y;
-	}
-
-	void set_x(int new_x)
-	{
-		x = new_x;
-	}
-
-	void set_y(int new_y)
-	{
-		y = new_y;
-	}
 };
 
 struct Apple : Vec2
@@ -40,30 +23,32 @@ struct Apple : Vec2
 
 	void update()
 	{
+	
+	}
+
+	void draw()
+	{
 		mvaddstr(y, x, "&");
 	}
 };
 
 struct Snake
 {
-	Vec2 head;
-	std::vector<Vec2> body;
+	std::shared_ptr<Vec2> head = std::make_unique<Vec2>();
+	std::vector<std::shared_ptr<Vec2>> body;
 	Vec2 dir;
 	Snake()
 	{
 		dir.x = 0;
 		dir.y = 0;
 	
-		body.push_back(head);
+		body.push_back(std::move(head));
 	}
-	bool should_move_back = true;
-
-
-	void extend_snake() // Silly ahh function. new_segment gets deleted at end of scope lmaooo gotta make it an std::vector<std::shared_ptr<Vec2>> and push_back an std::shared_ptr<Vec2>;
+	
+	void extend_snake()
 	{
-		Vec2 new_segment = body.back();
-		body.push_back(new_segment);
-		should_move_back = false;
+		std::shared_ptr<Vec2> new_segment = std::make_unique<Vec2>();
+		body.push_back(std::move(new_segment));
 	}
 
 	void move(int xdir, int ydir)
@@ -76,48 +61,56 @@ struct Snake
 	{
 		int key = wgetch(win);
 
-		if (key == KEY_DOWN)
+		switch (key)
 		{
-			move(0, 1);
-		}
-		if (key == KEY_UP)
-		{
-			move(0, -1);
-		}
-		if (key == KEY_LEFT)
-		{
-			move(-1, 0);
-		}
-		if (key == KEY_RIGHT)
-		{
-			move(1, 0);
+			case 'S':
+			case 's':
+			case KEY_DOWN:
+				move(0, 1);
+				break;
+			case 'W':
+			case 'w':
+			case KEY_UP:
+				move(0, -1);
+				break;
+			case 'A':
+			case 'a':
+			case KEY_LEFT:
+				move(-1, 0);
+				break;
+			case 'D':
+			case 'd':
+			case KEY_RIGHT:
+				move(1, 0);
+				break;
 		}
 
-		if (body.front().x == apple->x && body.front().y == apple->y)
+		if (body.front()->x == apple->x && body.front()->y == apple->y)
 		{
 			apple->new_pos();
-			//extend_snake();
+			extend_snake();
 		}
-
-		for (int i = 0; i < body.size(); i++)
-		{
-			if (i == 0)
-			{
-				body[i].x += dir.x;
-				body[i].y += dir.y;
-			}
-			else
-			{
-				body[i].x = body[i-1].x;
-				body[i].y = body[i-1].y;
-			}
-		}
-		mvaddstr(body.front().y, body.front().x, "#");
-
 	}
 
-	
+	void draw()
+	{
+		for (int i = 0; i < body.size(); i++)
+		{
+			if (i > 0)
+			{
+				body[i]->x = body[i-1]->x;
+				body[i]->y = body[i-1]->y;
+			}
 
+			if (i == 0)
+			{
+				body[i]->x += dir.x;
+				body[i]->y += dir.y;
+			}
+		}
+		mvaddstr(body.front()->y, body.front()->x, "#");
+
+	}
 
 };
 
@@ -125,7 +118,9 @@ void update(Snake* snake, Apple* apple, WINDOW* win)
 {
 	snake->update(apple, win);
 	apple->update();
-	refresh();
+	snake->draw();
+	apple->draw();
+	wrefresh(win);
 }
 
 int main()
@@ -133,18 +128,20 @@ int main()
 	WINDOW* win = initscr();
 	keypad(win, true);
 	nodelay(win, true);
+	curs_set(0);
 	
 	Apple apple;
 	Snake snake;
-	Vec2 dir;
 
 	apple.new_pos();
 
 	while (true)
 	{
+		mvprintw(30, 30, "Your score is: %ld", snake.body.size());
+
+		usleep(100000);
 		update(&snake, &apple, win);
 		erase();
-		usleep(100000); // Sleep for 0.1s
 	}
 
 	endwin();
