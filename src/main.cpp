@@ -4,23 +4,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <memory>
+#include <ctime>
 
 #define SNAKE_CHAR "#"
 #define APPLE_CHAR "&"
 
 struct Vec2
 {
-	int x = 10;
-	int y = 10;
+	int x = 0;
+	int y = 0;
+
+	void set_pos(unsigned int new_x, unsigned int new_y)
+	{
+		x = new_x;
+		y = new_y;
+	}
+
 };
 
 struct Apple : Vec2
 {
-	Apple() = default;
+	Apple()
+	{
+		time_t t;
+		srand((unsigned int) time(&t));
+		set_pos(40, 15);
+	}
+
 	void new_pos()
 	{
-		x = rand() % 20; // Use seeded random numbers $ man 3 rand
-		y = rand() % 20;
+		x = rand() % 60; // Use seeded random numbers $ man 3 rand
+		y = rand() % 30;
 	}
 
 	void update()
@@ -45,6 +59,8 @@ struct Snake
 		dir.y = 0;
 	
 		body.push_back(std::move(head));
+
+		body.front()->set_pos(20, 15);
 	}
 	
 	void extend_snake()
@@ -138,11 +154,9 @@ int main()
 	Apple apple;
 	Snake snake;
 
-	apple.new_pos();
-
 	while (true)
 	{
-		mvprintw(30, 30, "Your score is: %ld", snake.body.size());
+		mvprintw(30, 60, "Your score is: %ld", snake.body.size());
 
 		usleep(100000);
 		update(&snake, &apple, win);
