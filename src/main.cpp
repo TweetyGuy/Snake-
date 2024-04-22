@@ -77,8 +77,11 @@ struct Snake
 
 	void move(int xdir, int ydir)
 	{
-		if ((dir.x == (xdir * -1) && dir.x != 0) | (dir.y == (ydir * -1) && dir.y != 0)) { return; }
-		
+		if ((dir.x < 0 && xdir > 0) | (dir.x > 0 && xdir < 0) | (dir.y < 0 && ydir > 0) | (dir.y > 0 && ydir < 0))
+		{
+			return;
+		}
+
 		dir.x = xdir;
 		dir.y = ydir;
 	}
@@ -90,21 +93,29 @@ struct Snake
 		switch (key)
 		{
 			case 'S':
+				move(0, 2);
+				break;
 			case 's':
 			case KEY_DOWN:
 				move(0, 1);
 				break;
 			case 'W':
+				move(0, -2);
+				break;
 			case 'w':
 			case KEY_UP:
 				move(0, -1);
 				break;
 			case 'A':
+				move(-2, 0);
+				break;
 			case 'a':
 			case KEY_LEFT:
 				move(-1, 0);
 				break;
 			case 'D':
+				move(2, 0);
+				break;
 			case 'd':
 			case KEY_RIGHT:
 				move(1, 0);
@@ -156,20 +167,31 @@ int main()
 {
 	WINDOW* win = initscr();
 	keypad(win, true);
-	nodelay(win, true);
 	curs_set(0);
 	
 	Apple apple;
 	Snake snake;
 
-	while (true)
+	mvprintw(14, 2, "Welcome to Snake++, a terminal snake game written in C++.");
+	mvprintw(15, 11, "To win, you must reach a score of 100.");
+	mvprintw(30, 16, "Press any key to continue . . . ");
+
+	wgetch(win);
+
+	nodelay(win, true);
+	while (snake.body.size() < 100)
 	{
-		mvprintw(30, 60, "Your score is: %ld", snake.body.size());
+		mvprintw(30, 51, "Your score is: %ld", snake.body.size());
 
 		usleep(100000);
 		update(&snake, &apple, win);
 		erase();
 	}
+
+	nodelay(win, false);
+	mvprintw(15, 15, "Wow! You won! Congratulations!");
+	mvprintw(30, 16, "Press any key to continue . . . ");
+	wgetch(win);
 
 	endwin();
 }
