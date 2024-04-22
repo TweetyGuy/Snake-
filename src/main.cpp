@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <memory>
 
+#define SNAKE_CHAR "#"
+#define APPLE_CHAR "&"
 
 struct Vec2
 {
@@ -28,7 +30,7 @@ struct Apple : Vec2
 
 	void draw()
 	{
-		mvaddstr(y, x, "&");
+		mvaddstr(y, x, APPLE_CHAR);
 	}
 };
 
@@ -94,21 +96,24 @@ struct Snake
 
 	void draw()
 	{
-		for (int i = 0; i < body.size(); i++)
+		for (int i = body.size()-1; i >= 0; i--)
 		{
+			
+			if (i == 0)
+			{
+				body[i]->x += dir.x;
+				body[i]->y += dir.y;
+			}
+
 			if (i > 0)
 			{
 				body[i]->x = body[i-1]->x;
 				body[i]->y = body[i-1]->y;
 			}
 
-			if (i == 0)
-			{
-				body[i]->x += dir.x;
-				body[i]->y += dir.y;
-			}
+
+			mvaddstr(body[i]->y, body[i]->x, SNAKE_CHAR);
 		}
-		mvaddstr(body.front()->y, body.front()->x, "#");
 
 	}
 
