@@ -31,10 +31,16 @@ struct Apple : Vec2
 		set_pos(40, 15);
 	}
 
-	void new_pos()
+	void new_pos(std::vector<std::shared_ptr<Vec2>>* body)
 	{
 		x = rand() % 60; // Use seeded random numbers $ man 3 rand
 		y = rand() % 30;
+
+		for (auto segment : *body)
+		{
+			if (segment->x == x && segment->y == y)
+				new_pos(body);
+		}
 	}
 
 	void update()
@@ -71,6 +77,8 @@ struct Snake
 
 	void move(int xdir, int ydir)
 	{
+		if ((dir.x == (xdir * -1) && dir.x != 0) | (dir.y == (ydir * -1) && dir.y != 0)) { return; }
+		
 		dir.x = xdir;
 		dir.y = ydir;
 	}
@@ -105,7 +113,7 @@ struct Snake
 
 		if (body.front()->x == apple->x && body.front()->y == apple->y)
 		{
-			apple->new_pos();
+			apple->new_pos(&body);
 			extend_snake();
 		}
 	}
