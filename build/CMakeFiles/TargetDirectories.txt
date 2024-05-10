@@ -1,3 +1,0 @@
-/home/ubuntu/prog/Snake++/build/CMakeFiles/Snake++.dir
-/home/ubuntu/prog/Snake++/build/CMakeFiles/edit_cache.dir
-/home/ubuntu/prog/Snake++/build/CMakeFiles/rebuild_cache.dir
